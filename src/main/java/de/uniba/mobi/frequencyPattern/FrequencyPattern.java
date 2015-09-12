@@ -1,6 +1,8 @@
 package de.uniba.mobi.frequencyPattern;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,19 +14,22 @@ public class FrequencyPattern {
 
 	private int numberOfSegments;
 	private int timeslotsPerSegment = 6;
-	private int timelineSize = timeslotsPerSegment * numberOfSegments;
+	private int timelineSize;
+	private DateTimeFormatter dateTimeFormat = DateTimeFormatter
+			.ofPattern("yyyy-MM-dd HH:mm:ssX");
 
 	public FrequencyPattern(LocalTime begin, LocalTime end) {
 		this.begin = begin;
 		this.end = end;
 		this.numberOfSegments = (int) begin.until(end, ChronoUnit.HOURS);
+		timelineSize = timeslotsPerSegment * numberOfSegments;
+		System.out.println("Number of Segments :" + numberOfSegments);
 	}
 
 	public float frequencyGenerator(Node a, Node b) {
-		int[] segmentSizes = { timeslotsPerSegment, timeslotsPerSegment,
-				timeslotsPerSegment, timeslotsPerSegment, timeslotsPerSegment };
+		int[] segmentSizes = getSegmentSizes();
 
-		float[] alphaValues = { 0.2f, 0.2f, 0.2f, 0.2f, 0.2f };
+		float[] alphaValues = getAlphaValues();
 
 		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
 		float[] averageOfSegments = calculateAverageOfSegments(
@@ -34,6 +39,23 @@ public class FrequencyPattern {
 				alphaValues);
 
 		return relativeFrequency;
+	}
+
+	private float[] getAlphaValues() {
+		float[] alphaValues = new float[numberOfSegments];
+
+		for (int i = 0; i < numberOfSegments; i++) {
+			alphaValues[i] = 1.0f / numberOfSegments;
+		}
+		return alphaValues;
+	}
+
+	private int[] getSegmentSizes() {
+		int[] segmentSizes = new int[numberOfSegments];
+		for (int i = 0; i < numberOfSegments; i++) {
+			segmentSizes[i] = timeslotsPerSegment;
+		}
+		return segmentSizes;
 	}
 
 	private boolean[] calculateCommonOccurrences(Node a, Node b) {
@@ -54,17 +76,16 @@ public class FrequencyPattern {
 					timelineA, moment);
 			List<TimeAreaPair> timelineBForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
 					timelineB, moment);
-			output[counter] = shareBeamzone(timelineAForCurrentTimeslot,
+			output[counter++] = shareBeamzone(timelineAForCurrentTimeslot,
 					timelineBForCurrentTimeslot);
-			counter++;
 
-			moment = moment.plusMinutes(timeslotsPerSegment);
+			moment = moment.plusMinutes(60 / timeslotsPerSegment);
 		}
 
 		return output;
 	}
 
-	private static boolean shareBeamzone(List<TimeAreaPair> timelineA,
+	private boolean shareBeamzone(List<TimeAreaPair> timelineA,
 			List<TimeAreaPair> timelineB) {
 		for (TimeAreaPair entryA : timelineA) {
 			for (TimeAreaPair entryB : timelineB) {
@@ -77,12 +98,13 @@ public class FrequencyPattern {
 		return false;
 	}
 
-	private static List<TimeAreaPair> getTimeAreaPairListFromTimeLine(
+	private List<TimeAreaPair> getTimeAreaPairListFromTimeLine(
 			List<TimeAreaPair> timeline, LocalTime moment) {
 		List<TimeAreaPair> result = new ArrayList<TimeAreaPair>();
 		LocalTime momentPlusTenMinutes = LocalTime.from(moment).plusMinutes(10);
 		for (TimeAreaPair entry : timeline) {
-			LocalTime entryTime = LocalTime.from(entry.getTimestamp());
+			LocalTime entryTime = LocalTime.from(LocalDateTime.parse(
+					entry.getTimestamp(), dateTimeFormat));
 			if (entryTime.isAfter(moment)
 					&& entryTime.isBefore(momentPlusTenMinutes)) {
 				result.add(entry);

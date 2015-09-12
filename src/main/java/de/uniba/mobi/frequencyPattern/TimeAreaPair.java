@@ -1,7 +1,6 @@
 package de.uniba.mobi.frequencyPattern;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 public class TimeAreaPair implements Serializable {
 
@@ -9,23 +8,23 @@ public class TimeAreaPair implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 212650605054811872L;
-	private LocalDateTime timestamp;
+	private String timestamp;
 	private Area area;
 
 	public TimeAreaPair() {
 		super();
 	}
 
-	public TimeAreaPair(LocalDateTime timestamp, Area area) {
+	public TimeAreaPair(String timestamp, Area area) {
 		this.timestamp = timestamp;
 		this.area = area;
 	}
 
-	public LocalDateTime getTimestamp() {
+	public String getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(LocalDateTime timestamp) {
+	public void setTimestamp(String timestamp) {
 		this.timestamp = timestamp;
 	}
 
