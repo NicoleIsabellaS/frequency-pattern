@@ -36,7 +36,7 @@ public class Application {
 		System.out.println("finished");
 
 		ArrayList<String> shortmacs = new ArrayList<String>();
-		for (int i = 0; i < 25; i++) {
+		for (int i = 0; i < 100; i++) {
 			shortmacs.add(hashmacs.get(i));
 		}
 

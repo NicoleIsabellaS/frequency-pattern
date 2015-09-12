@@ -23,7 +23,6 @@ public class FrequencyPattern {
 		this.end = end;
 		this.numberOfSegments = (int) begin.until(end, ChronoUnit.HOURS);
 		timelineSize = timeslotsPerSegment * numberOfSegments;
-		System.out.println("Number of Segments :" + numberOfSegments);
 	}
 
 	public float frequencyGenerator(Node a, Node b) {
