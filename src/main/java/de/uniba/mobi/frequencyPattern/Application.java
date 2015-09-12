@@ -1,6 +1,7 @@
 package de.uniba.mobi.frequencyPattern;
 
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,7 +74,10 @@ public class Application {
 			throws ClassNotFoundException, IOException {
 		System.out.println("Calculating values for " + nodes.size()
 				+ " values:");
-		FrequencyPattern frequencyPattern = new FrequencyPattern();
+		LocalTime eventBeginOfDay = LocalTime.of(12, 0);
+		LocalTime eventEndOfDay = LocalTime.of(18, 0);
+		FrequencyPattern frequencyPattern = new FrequencyPattern(
+				eventBeginOfDay, eventEndOfDay);
 		CsvGenerator csv = new CsvGenerator("test.csv");
 		csv.addCell("mac hashes");
 

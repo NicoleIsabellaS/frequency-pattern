@@ -1,19 +1,24 @@
 package de.uniba.mobi.frequencyPattern;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import de.uniba.mobi.jdbc.DBConnection;
 
 public class FrequencyPattern {
 
-	private final int numberOfSegments = 5;
-	private final int timeslotsPerSegment = 6;
-	private final int timelineSize = timeslotsPerSegment * numberOfSegments;
+	private LocalTime begin;
+	private LocalTime end;
 
+	private int numberOfSegments;
+	private int timeslotsPerSegment = 6;
+	private int timelineSize = timeslotsPerSegment * numberOfSegments;
+
+	public FrequencyPattern(LocalTime begin, LocalTime end) {
+		this.begin = begin;
+		this.end = end;
+		this.numberOfSegments = (int) begin.until(end, ChronoUnit.HOURS);
+	}
 
 	public float frequencyGenerator(Node a, Node b) {
 		int[] segmentSizes = { timeslotsPerSegment, timeslotsPerSegment,
@@ -41,97 +46,53 @@ public class FrequencyPattern {
 		List<TimeAreaPair> timelineA = a.getTimeline();
 		List<TimeAreaPair> timelineB = b.getTimeline();
 
-		/*
-		 * Area[] aggregTimelineA = new Area[timelineSize]; Area[]
-		 * aggregTimelineB = new Area[timelineSize];
-		 */
+		int counter = 0;
+		LocalTime moment = LocalTime.from(begin);
+		LocalTime lastMoment = LocalTime.from(end);
+		while (moment.isBefore(lastMoment)) {
+			List<TimeAreaPair> timelineAForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
+					timelineA, moment);
+			List<TimeAreaPair> timelineBForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
+					timelineB, moment);
+			output[counter] = shareBeamzone(timelineAForCurrentTimeslot,
+					timelineBForCurrentTimeslot);
+			counter++;
 
-		Map<Integer, List<Area>> timeslotAreaMappingA = new HashMap<>();
-		Map<Integer, List<Area>> timeslotAreaMappingB = new HashMap<>();
-
-		// Take only the last area of a timeslot
-		for (TimeAreaPair each : timelineA) {
-			int hour = Integer.parseInt(each.getTimestamp().split(" ")[1]
-					.split(":")[0]);
-			int minute = Integer.parseInt(each.getTimestamp().split(" ")[1]
-					.split(":")[1]);
-
-			int index = getIndexByHourAndMinute(hour, minute);
-
-			if (timeslotAreaMappingA.get(index) == null) {
-				List<Area> tmpList = new ArrayList<>();
-				tmpList.add(each.getArea());
-				timeslotAreaMappingA.put(index, tmpList);
-			} else {
-				List<Area> tmpList = (List<Area>) timeslotAreaMappingA
-						.get(index);
-				tmpList.add(each.getArea());
-				timeslotAreaMappingA.put(index, tmpList);
-			}
-			// aggregTimelineA[getIndexByHourAndMinute(hour, minute)] =
-			// each.getArea();
+			moment = moment.plusMinutes(timeslotsPerSegment);
 		}
 
-		for (TimeAreaPair each : timelineB) {
-			int hour = Integer.parseInt(each.getTimestamp().split(" ")[1]
-					.split(":")[0]);
-			int minute = Integer.parseInt(each.getTimestamp().split(" ")[1]
-					.split(":")[1]);
+		return output;
+	}
 
-			int index = getIndexByHourAndMinute(hour, minute);
-
-			if (timeslotAreaMappingB.get(index) == null) {
-				List<Area> tmpList = new ArrayList<>();
-				tmpList.add(each.getArea());
-				timeslotAreaMappingB.put(index, tmpList);
-			} else {
-				List<Area> tmpList = (List<Area>) timeslotAreaMappingB
-						.get(index);
-				tmpList.add(each.getArea());
-				timeslotAreaMappingB.put(index, tmpList);
-			}
-		}
-
-		for (int i = 0; i < timelineSize; i++) {
-			if (timeslotAreaMappingA.get(i) != null) {
-				for (Area eachA : timeslotAreaMappingA.get(i)) {
-					if (timeslotAreaMappingB.get(i) != null) {
-						for (Area eachB : timeslotAreaMappingB.get(i)) {
-							if (eachA != null & eachB != null) {
-								if (eachA.getBeamzone().equals(
-										eachB.getBeamzone())) {
-									output[i] = true;
-									break;
-								}
-							}
-						}
-					}
+	private static boolean shareBeamzone(List<TimeAreaPair> timelineA,
+			List<TimeAreaPair> timelineB) {
+		for (TimeAreaPair entryA : timelineA) {
+			for (TimeAreaPair entryB : timelineB) {
+				if (entryA.getArea().getBeamzone()
+						.equals(entryB.getArea().getBeamzone())) {
+					return true;
 				}
 			}
 		}
-
-		/*
-		 * for (int i = 0; i < timelineSize; i++) { if (aggregTimelineA[i] !=
-		 * null && aggregTimelineB[i] != null) { if
-		 * (aggregTimelineA[i].getBeamzone().equals(
-		 * aggregTimelineB[i].getBeamzone())) { output[i] = true; } else {
-		 * output[i] = false; } } }
-		 */
-
-		return output;
+		return false;
 	}
 
-	private int getIndexByHourAndMinute(int hour, int minute) {
-		int output = 0;
-
-		output = ((hour - 19) * timeslotsPerSegment)
-				+ (minute / (60 / timeslotsPerSegment));
-
-		return output;
+	private static List<TimeAreaPair> getTimeAreaPairListFromTimeLine(
+			List<TimeAreaPair> timeline, LocalTime moment) {
+		List<TimeAreaPair> result = new ArrayList<TimeAreaPair>();
+		LocalTime momentPlusTenMinutes = LocalTime.from(moment).plusMinutes(10);
+		for (TimeAreaPair entry : timeline) {
+			LocalTime entryTime = LocalTime.from(entry.getTimestamp());
+			if (entryTime.isAfter(moment)
+					&& entryTime.isBefore(momentPlusTenMinutes)) {
+				result.add(entry);
+			}
+		}
+		return result;
 	}
 
-	private float[] calculateAverageOfSegments(
-			boolean[] commonOccurrences, int[] segmentSizes) {
+	private float[] calculateAverageOfSegments(boolean[] commonOccurrences,
+			int[] segmentSizes) {
 		float[] output = new float[numberOfSegments];
 
 		int timelineIndex = 0;

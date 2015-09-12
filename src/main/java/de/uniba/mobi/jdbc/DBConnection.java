@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +19,8 @@ public class DBConnection {
 	private static String url = "jdbc:postgresql://141.13.250.113:5432/bazau_2015_db";
 	private static String user = "bazau";
 	private static String password = "bazau_db";
+	private static DateTimeFormatter dateTimeFormat = DateTimeFormatter
+			.ofPattern("yyyy-MM-dd HH:mmX");
 
 	public static void connect() {
 		try {
@@ -39,8 +43,10 @@ public class DBConnection {
 							+ "' AND date_part('day', to_timestamp(cast(epocutc as int))) = 17 AND date_part('hour', to_timestamp(cast(epocutc as int))) >= 19 ORDER BY epocutc"); // TODO
 			rs = pst.executeQuery();
 
+			// format: 2015-07-17 22:09:19+02
 			while (rs.next()) {
-				output.add(new TimeAreaPair(rs.getString(1), new Area(rs
+				output.add(new TimeAreaPair(LocalDateTime.parse(
+						rs.getString(1), dateTimeFormat), new Area(rs
 						.getString(2))));
 			}
 
