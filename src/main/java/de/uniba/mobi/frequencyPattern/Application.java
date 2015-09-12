@@ -1,6 +1,7 @@
 package de.uniba.mobi.frequencyPattern;
 
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +11,15 @@ public class Application {
 
 	private static int index = 0;
 	private static int numberOfElements = 0;
+	private static LocalTime eventBeginOfDay = LocalTime.of(12, 0);
+	private static LocalTime eventEndOfDay = LocalTime.of(18, 0);
 
 	public static void main(String[] args) {
 		try {
-			DBConnection.connect();
-			createNodesFile("nodes.ser");
-			DBConnection.disconnect();
+			DBConnection connection = new DBConnection();
+			connection.connect();
+			createNodesFile(connection, "nodes.ser");
+			connection.disconnect();
 			ArrayList<Node> nodes = readNodesFromFile("nodes.ser");
 			writeCSVFromNodes(nodes);
 		} catch (Exception e) {
@@ -23,28 +27,30 @@ public class Application {
 		}
 	}
 
-	private static void createNodesFile(String filename) throws IOException {
+	private static void createNodesFile(DBConnection connection, String filename)
+			throws IOException {
 		System.out.println("Getting a lot of information from database. "
 				+ "This will take a while.\n"
 				+ "Just kidding. This is only the beginning.");
-		List<String> hashmacs = DBConnection.getAllHashMacs();
+		List<String> hashmacs = connection.getAllHashMacs();
 		System.out.println("finished");
 
-		// ArrayList<String> shortmacs = new ArrayList<String>();
-		// for (int i = 0; i < 100; i++) {
-		// shortmacs.add(hashmacs.get(i));
-		// }
+		ArrayList<String> shortmacs = new ArrayList<String>();
+		for (int i = 0; i < 100; i++) {
+			shortmacs.add(hashmacs.get(i));
+		}
 
-		numberOfElements = hashmacs.size();
-		// numberOfElements = shortmacs.size();
+		// numberOfElements = hashmacs.size();
+		numberOfElements = shortmacs.size();
 
 		System.out.println("Creating nodes file from " + numberOfElements
 				+ " hashmacs: ");
 		JsonFileWriter file = new JsonFileWriter(filename);
-		for (String each : hashmacs) {
-			// for (String each : shortmacs) {
+		// for (String each : hashmacs) {
+		for (String each : shortmacs) {
 			Node node = new Node(each);
-			node.setTimeline(DBConnection.getTimeline(each));
+			node.setTimeline(connection.getTimeline(each, eventBeginOfDay,
+					eventEndOfDay));
 			file.writeDataToFile(node);
 			System.out.print(".");
 			if (index++ % 75 == 74)
@@ -73,7 +79,8 @@ public class Application {
 			throws ClassNotFoundException, IOException {
 		System.out.println("Calculating values for " + nodes.size()
 				+ " values:");
-		FrequencyPattern frequencyPattern = new FrequencyPattern();
+		FrequencyPattern frequencyPattern = new FrequencyPattern(
+				eventBeginOfDay, eventEndOfDay);
 		CsvGenerator csv = new CsvGenerator("test.csv");
 		csv.addCell("mac hashes");
 

@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,12 +14,12 @@ import de.uniba.mobi.frequencyPattern.TimeAreaPair;
 
 public class DBConnection {
 
-	private static Connection connection = null;
-	private static String url = "jdbc:postgresql://141.13.250.113:5432/bazau_2015_db";
-	private static String user = "bazau";
-	private static String password = "bazau_db";
+	private Connection connection = null;
+	private String url = "jdbc:postgresql://141.13.250.113:5432/bazau_2015_db";
+	private String user = "bazau";
+	private String password = "bazau_db";
 
-	public static void connect() {
+	public void connect() {
 		try {
 			connection = DriverManager.getConnection(url, user, password);
 		} catch (SQLException e) {
@@ -26,33 +27,41 @@ public class DBConnection {
 		}
 	}
 
-	public static List<TimeAreaPair> getTimeline(String hashmac) {
+	public List<TimeAreaPair> getTimeline(String hashmac, LocalTime begin,
+			LocalTime end) {
 		List<TimeAreaPair> output = new ArrayList<>();
 
-		PreparedStatement pst = null;
-		ResultSet rs = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet resultSet = null;
 
 		try {
-			pst = connection
+			preparedStatement = connection
 					.prepareStatement("SELECT to_timestamp(cast(epocutc as int)), beamzone FROM bazau2015.observation_wifi WHERE hashmac='"
 							+ hashmac
-							+ "' AND date_part('day', to_timestamp(cast(epocutc as int))) = 17 AND date_part('hour', to_timestamp(cast(epocutc as int))) >= 19 ORDER BY epocutc"); // TODO
-			rs = pst.executeQuery();
+							+ "' AND date_part('day', to_timestamp(cast(epocutc as int))) = "
+							+ 18
+							+ " AND date_part('hour', to_timestamp(cast(epocutc as int))) >= "
+							+ begin.getHour()
+							+ " AND date_part('hour', to_timestamp(cast(epocutc as int))) < "
+							+ end.getHour() + 1 + " ORDER BY epocutc");
+			resultSet = preparedStatement.executeQuery();
 
-			while (rs.next()) {
-				output.add(new TimeAreaPair(rs.getString(1), new Area(rs
-						.getString(2))));
+			// format: 2015-07-17 22:09:19+02
+			while (resultSet.next()) {
+				TimeAreaPair data = new TimeAreaPair(resultSet.getString(1),
+						new Area(resultSet.getString(2)));
+				output.add(data);
 			}
 
 		} catch (SQLException ex) {
 			System.err.println(ex.getMessage());
 		} finally {
 			try {
-				if (rs != null) {
-					rs.close();
+				if (resultSet != null) {
+					resultSet.close();
 				}
-				if (pst != null) {
-					pst.close();
+				if (preparedStatement != null) {
+					preparedStatement.close();
 				}
 			} catch (SQLException e) {
 				System.err.println(e.getMessage());
@@ -62,7 +71,7 @@ public class DBConnection {
 		return output;
 	}
 
-	public static List<String> getAllHashMacs() {
+	public List<String> getAllHashMacs() {
 		List<String> output = new ArrayList<>();
 
 		PreparedStatement preparedStatement = null;
@@ -95,7 +104,7 @@ public class DBConnection {
 		return output;
 	}
 
-	public static void disconnect() {
+	public void disconnect() {
 		try {
 			if (connection != null) {
 				connection.close();
