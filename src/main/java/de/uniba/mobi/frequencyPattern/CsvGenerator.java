@@ -10,15 +10,18 @@ public class CsvGenerator {
 
 	public CsvGenerator(String fileName) throws IOException {
 		this.fileName = fileName;
-		writer = new FileWriter(fileName);
+		writer = new FileWriter(fileName, true);
 	}
 
 	public void addCell(String value) throws IOException {
-		writer.append(value).append(';').flush();
+		writer.append(value).append(';');
 	}
 
-	public void newRow() throws IOException {
-		writer.append('\n');
+	public void newRow(String[] values) throws IOException {
+		for (String each : values) {
+			addCell(each);
+		}
+		writer.append('\n').flush();
 	}
 
 	public void close() throws IOException {

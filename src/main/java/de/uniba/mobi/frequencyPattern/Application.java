@@ -81,33 +81,34 @@ public class Application {
 				+ " values:");
 		FrequencyPattern frequencyPattern = new FrequencyPattern(
 				eventBeginOfDay, eventEndOfDay);
-		CsvGenerator csv = new CsvGenerator("test_quick.csv");
-		csv.addCell("");
+
+		String[] values = new String[numberOfElements + 1];
+		values[0] = "";
 
 		// header row
-		for (Node each : nodes) {
-			csv.addCell(each.getHashmac());
+		for (int cellIndex = 1; cellIndex <= numberOfElements; cellIndex++) {
+			values[cellIndex] = nodes.get(cellIndex).getHashmac();
 		}
-		csv.newRow();
+		new WriteLineRunnable("test_quick.csv", values).start();
 
 		// data rows
-		for (int rowIndex = 0; rowIndex < nodes.size(); rowIndex++) {
+		for (int rowIndex = 0; rowIndex < numberOfElements; rowIndex++) {
 			System.out.print(".");
 			if (rowIndex % 75 == 74)
 				System.out.print("\n");
+			values = new String[numberOfElements + 1];
 			// header column
-			csv.addCell(nodes.get(rowIndex).getHashmac());
+			values[0] = nodes.get(rowIndex).getHashmac();
 
 			// data columns
-			for (int cellIndex = 0; cellIndex < nodes.size(); cellIndex++) {
+			for (int cellIndex = 1; cellIndex <= numberOfElements; cellIndex++) {
 				float value = rowIndex == cellIndex ? 0f : frequencyPattern
 						.frequencyGenerator(nodes.get(rowIndex),
 								nodes.get(cellIndex));
-				csv.addCell(String.valueOf(value));
+				values[cellIndex] = String.valueOf(value);
 			}
-			csv.newRow();
+			new WriteLineRunnable("test_quick.csv", values).start();
 		}
-		csv.close();
 		System.out.println("finished");
 	}
 }
