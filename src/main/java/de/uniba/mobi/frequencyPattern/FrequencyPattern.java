@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FrequencyPattern {
 
@@ -14,7 +14,6 @@ public class FrequencyPattern {
 
 	private int numberOfSegments;
 	private int timeslotsPerSegment = 6;
-	private int timelineSize;
 	int[] segmentSizes;
 	float[] alphaValues;
 	private DateTimeFormatter dateTimeFormat = DateTimeFormatter
@@ -24,7 +23,6 @@ public class FrequencyPattern {
 		this.begin = begin;
 		this.end = end;
 		this.numberOfSegments = (int) begin.until(end, ChronoUnit.HOURS);
-		timelineSize = timeslotsPerSegment * numberOfSegments;
 
 		segmentSizes = getSegmentSizes();
 		alphaValues = getAlphaValues();
@@ -48,79 +46,63 @@ public class FrequencyPattern {
 	}
 
 	public float frequencyGenerator(Node a, Node b) {
-		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
+		int commonOccurrences = calculateNumberOfCommonOccurrences(a, b);
 		return calculateRelativeFrequency(commonOccurrences);
 	}
 
-	private boolean[] calculateCommonOccurrences(Node a, Node b) {
-		boolean[] output = new boolean[timelineSize];
+	private int calculateNumberOfCommonOccurrences(Node a, Node b) {
+		int numberOfCommonOccurrences = 0;
 
-		for (int i = 0; i < output.length; i++) {
-			output[i] = false;
-		}
+		Map<String, String> timelineA = a.getTimeline();
+		Map<String, String> timelineB = b.getTimeline();
 
-		List<TimeAreaPair> timelineA = a.getTimeline();
-		List<TimeAreaPair> timelineB = b.getTimeline();
-
-		int counter = 0;
 		LocalTime moment = LocalTime.from(begin);
 		LocalTime lastMoment = LocalTime.from(end);
 		while (moment.isBefore(lastMoment)) {
-			List<TimeAreaPair> timelineAForMoment = getTimeAreaPairListFromTimeLine(
+			Map<String, String> timelineAForMoment = getTimeAreaPairListFromTimeLine(
 					timelineA, moment);
-			List<TimeAreaPair> timelineBForMoment = getTimeAreaPairListFromTimeLine(
+			Map<String, String> timelineBForMoment = getTimeAreaPairListFromTimeLine(
 					timelineB, moment);
-			output[counter++] = shareBeamzone(timelineAForMoment,
-					timelineBForMoment);
-
+			if (shareBeamzone(timelineAForMoment, timelineBForMoment)) {
+				numberOfCommonOccurrences++;
+			}
 			moment = moment.plusMinutes(60 / timeslotsPerSegment);
 		}
 
-		return output;
+		return numberOfCommonOccurrences;
 	}
 
-	private boolean shareBeamzone(List<TimeAreaPair> timelineA,
-			List<TimeAreaPair> timelineB) {
-		for (TimeAreaPair entryA : timelineA) {
-			for (TimeAreaPair entryB : timelineB) {
-				if (entryA.getArea().getBeamzone()
-						.equals(entryB.getArea().getBeamzone())) {
-					return true;
-				}
+	private boolean shareBeamzone(Map<String, String> timelineA,
+			Map<String, String> timelineB) {
+		for (String key : timelineA.keySet()) {
+			if (timelineB.containsKey(key)) {
+				return timelineA.get(key).equals(timelineB.get(key));
 			}
 		}
 		return false;
 	}
 
-	private List<TimeAreaPair> getTimeAreaPairListFromTimeLine(
-			List<TimeAreaPair> timeline, LocalTime moment) {
-		List<TimeAreaPair> result = new ArrayList<TimeAreaPair>();
+	private Map<String, String> getTimeAreaPairListFromTimeLine(
+			Map<String, String> timeline, LocalTime moment) {
+		Map<String, String> result = new HashMap<>();
 		LocalTime momentPlusTenMinutes = LocalTime.from(moment).plusMinutes(10);
-		for (TimeAreaPair entry : timeline) {
-			LocalTime entryTime = LocalTime.from(LocalDateTime.parse(
-					entry.getTimestamp(), dateTimeFormat));
+		for (String timestamp : timeline.keySet()) {
+			LocalTime entryTime = LocalTime.from(LocalDateTime.parse(timestamp,
+					dateTimeFormat));
 			if (entryTime.isAfter(moment)
 					&& entryTime.isBefore(momentPlusTenMinutes)) {
-				result.add(entry);
+				result.put(timestamp, timeline.get(timestamp));
 			}
 		}
 		return result;
 	}
 
-	private float calculateRelativeFrequency(boolean[] commonOccurrences) {
+	private float calculateRelativeFrequency(int commonOccurrences) {
 		float output = 0.0f;
 
-		int timelineIndex = 0;
 		for (int i = 0; i < segmentSizes.length; i++) {
-			int ammountOfCommonOccurrences = 0;
-			for (int j = timelineIndex; j < timelineIndex + segmentSizes[i]; j++) {
-				if (commonOccurrences[j]) {
-					ammountOfCommonOccurrences++;
-				}
-			}
-			output += (float) ammountOfCommonOccurrences
-					/ (float) segmentSizes[i] * alphaValues[i];
-			timelineIndex += segmentSizes[i];
+			output += (float) commonOccurrences / (float) segmentSizes[i]
+					* alphaValues[i];
 		}
 
 		return output;

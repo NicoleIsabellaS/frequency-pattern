@@ -1,8 +1,8 @@
 package de.uniba.mobi.frequencyPattern;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Node implements Serializable {
 
@@ -11,7 +11,7 @@ public class Node implements Serializable {
 	 */
 	private static final long serialVersionUID = 3723455680830001313L;
 	private String hashmac;
-	private List<TimeAreaPair> timeline = new ArrayList<>();
+	private Map<String, String> timeline = new HashMap<>();
 
 	public Node() {
 		super();
@@ -29,11 +29,11 @@ public class Node implements Serializable {
 		this.hashmac = hashmac;
 	}
 
-	public List<TimeAreaPair> getTimeline() {
+	public Map<String, String> getTimeline() {
 		return timeline;
 	}
 
-	public void setTimeline(List<TimeAreaPair> timeline) {
+	public void setTimeline(Map<String, String> timeline) {
 		this.timeline = timeline;
 	}
 }

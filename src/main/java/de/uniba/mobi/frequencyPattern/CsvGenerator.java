@@ -14,7 +14,7 @@ public class CsvGenerator {
 	}
 
 	public void addCell(String value) throws IOException {
-		writer.append(value).append(';');
+		writer.append(value).append(';').flush();
 	}
 
 	public void newRow(String[] values) throws IOException {
