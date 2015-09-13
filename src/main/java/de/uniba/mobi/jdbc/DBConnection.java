@@ -7,10 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import de.uniba.mobi.frequencyPattern.Area;
-import de.uniba.mobi.frequencyPattern.TimeAreaPair;
+import java.util.Map;
 
 public class DBConnection {
 
@@ -27,9 +26,9 @@ public class DBConnection {
 		}
 	}
 
-	public List<TimeAreaPair> getTimeline(String hashmac, LocalTime begin,
+	public Map<String, String> getTimeline(String hashmac, LocalTime begin,
 			LocalTime end) {
-		List<TimeAreaPair> output = new ArrayList<>();
+		Map<String, String> output = new HashMap<>();
 
 		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
@@ -48,9 +47,9 @@ public class DBConnection {
 
 			// format: 2015-07-17 22:09:19+02
 			while (resultSet.next()) {
-				TimeAreaPair data = new TimeAreaPair(resultSet.getString(1),
-						new Area(resultSet.getString(2)));
-				output.add(data);
+				String timestamp = resultSet.getString(1);
+				String area = resultSet.getString(2);
+				output.put(timestamp, area);
 			}
 
 		} catch (SQLException ex) {
@@ -85,7 +84,7 @@ public class DBConnection {
 							+ " AND date_part('hour', to_timestamp(cast(epocutc as int))) >= "
 							+ begin.getHour()
 							+ " AND date_part('hour', to_timestamp(cast(epocutc as int))) < "
-							+ end.getHour() + 1);
+							+ end.getHour() + 1 + " ORDER BY hashmac");
 			resultSet = preparedStatement.executeQuery();
 
 			while (resultSet.next()) {
