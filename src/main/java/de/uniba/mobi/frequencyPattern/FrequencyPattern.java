@@ -30,13 +30,6 @@ public class FrequencyPattern {
 		alphaValues = getAlphaValues();
 	}
 
-	public float frequencyGenerator(Node a, Node b) {
-		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
-		float[] averageOfSegments = calculateAverageOfSegments(commonOccurrences);
-
-		return calculateRelativeFrequency(averageOfSegments);
-	}
-
 	private float[] getAlphaValues() {
 		float[] alphaValues = new float[numberOfSegments];
 
@@ -52,6 +45,11 @@ public class FrequencyPattern {
 			segmentSizes[i] = timeslotsPerSegment;
 		}
 		return segmentSizes;
+	}
+
+	public float frequencyGenerator(Node a, Node b) {
+		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
+		return calculateRelativeFrequency(commonOccurrences);
 	}
 
 	private boolean[] calculateCommonOccurrences(Node a, Node b) {
@@ -109,8 +107,8 @@ public class FrequencyPattern {
 		return result;
 	}
 
-	private float[] calculateAverageOfSegments(boolean[] commonOccurrences) {
-		float[] output = new float[numberOfSegments];
+	private float calculateRelativeFrequency(boolean[] commonOccurrences) {
+		float output = 0.0f;
 
 		int timelineIndex = 0;
 		for (int i = 0; i < segmentSizes.length; i++) {
@@ -120,19 +118,9 @@ public class FrequencyPattern {
 					ammountOfCommonOccurrences++;
 				}
 			}
-			output[i] = (float) ammountOfCommonOccurrences
-					/ (float) segmentSizes[i];
+			output += (float) ammountOfCommonOccurrences
+					/ (float) segmentSizes[i] * alphaValues[i];
 			timelineIndex += segmentSizes[i];
-		}
-
-		return output;
-	}
-
-	private float calculateRelativeFrequency(float[] averageOfSegments) {
-		float output = 0.0f;
-
-		for (int i = 0; i < numberOfSegments; i++) {
-			output += averageOfSegments[i] * alphaValues[i];
 		}
 
 		return output;

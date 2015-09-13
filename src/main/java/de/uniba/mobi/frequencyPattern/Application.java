@@ -18,9 +18,9 @@ public class Application {
 		try {
 			DBConnection connection = new DBConnection();
 			connection.connect();
-			createNodesFile(connection, "nodes_short.ser");
+			createNodesFile(connection, "nodes_quick.ser");
 			connection.disconnect();
-			ArrayList<Node> nodes = readNodesFromFile("nodes_short.ser");
+			ArrayList<Node> nodes = readNodesFromFile("nodes_quick.ser");
 			writeCSVFromNodes(nodes);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -81,7 +81,7 @@ public class Application {
 				+ " values:");
 		FrequencyPattern frequencyPattern = new FrequencyPattern(
 				eventBeginOfDay, eventEndOfDay);
-		CsvGenerator csv = new CsvGenerator("test_short.csv");
+		CsvGenerator csv = new CsvGenerator("test_quick.csv");
 		csv.addCell("");
 
 		// header row
