@@ -86,8 +86,8 @@ public class Application {
 		values[0] = "";
 
 		// header row
-		for (int cellIndex = 1; cellIndex <= numberOfElements; cellIndex++) {
-			values[cellIndex] = nodes.get(cellIndex).getHashmac();
+		for (int cellIndex = 0; cellIndex < numberOfElements; cellIndex++) {
+			values[cellIndex + 1] = nodes.get(cellIndex).getHashmac();
 		}
 		new WriteLineRunnable("test_quick.csv", values).start();
 
@@ -101,11 +101,11 @@ public class Application {
 			values[0] = nodes.get(rowIndex).getHashmac();
 
 			// data columns
-			for (int cellIndex = 1; cellIndex <= numberOfElements; cellIndex++) {
+			for (int cellIndex = 0; cellIndex < numberOfElements; cellIndex++) {
 				float value = rowIndex == cellIndex ? 0f : frequencyPattern
 						.frequencyGenerator(nodes.get(rowIndex),
 								nodes.get(cellIndex));
-				values[cellIndex] = String.valueOf(value);
+				values[cellIndex + 1] = String.valueOf(value);
 			}
 			new WriteLineRunnable("test_quick.csv", values).start();
 		}
