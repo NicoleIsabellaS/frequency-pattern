@@ -71,7 +71,7 @@ public class DBConnection {
 		return output;
 	}
 
-	public List<String> getAllHashMacs() {
+	public List<String> getAllHashMacs(LocalTime begin, LocalTime end) {
 		List<String> output = new ArrayList<>();
 
 		PreparedStatement preparedStatement = null;
@@ -79,7 +79,13 @@ public class DBConnection {
 
 		try {
 			preparedStatement = connection
-					.prepareStatement("SELECT DISTINCT hashmac FROM bazau2015.observation_wifi");
+					.prepareStatement("SELECT DISTINCT hashmac FROM bazau2015.observation_wifi "
+							+ "WHERE date_part('day', to_timestamp(cast(epocutc as int))) = "
+							+ 18
+							+ " AND date_part('hour', to_timestamp(cast(epocutc as int))) >= "
+							+ begin.getHour()
+							+ " AND date_part('hour', to_timestamp(cast(epocutc as int))) < "
+							+ end.getHour() + 1);
 			resultSet = preparedStatement.executeQuery();
 
 			while (resultSet.next()) {

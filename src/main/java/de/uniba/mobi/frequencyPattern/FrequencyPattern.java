@@ -15,6 +15,8 @@ public class FrequencyPattern {
 	private int numberOfSegments;
 	private int timeslotsPerSegment = 6;
 	private int timelineSize;
+	int[] segmentSizes;
+	float[] alphaValues;
 	private DateTimeFormatter dateTimeFormat = DateTimeFormatter
 			.ofPattern("yyyy-MM-dd HH:mm:ssX");
 
@@ -23,21 +25,16 @@ public class FrequencyPattern {
 		this.end = end;
 		this.numberOfSegments = (int) begin.until(end, ChronoUnit.HOURS);
 		timelineSize = timeslotsPerSegment * numberOfSegments;
+
+		segmentSizes = getSegmentSizes();
+		alphaValues = getAlphaValues();
 	}
 
 	public float frequencyGenerator(Node a, Node b) {
-		int[] segmentSizes = getSegmentSizes();
-
-		float[] alphaValues = getAlphaValues();
-
 		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
-		float[] averageOfSegments = calculateAverageOfSegments(
-				commonOccurrences, segmentSizes);
+		float[] averageOfSegments = calculateAverageOfSegments(commonOccurrences);
 
-		float relativeFrequency = calculateRelativeFrequency(averageOfSegments,
-				alphaValues);
-
-		return relativeFrequency;
+		return calculateRelativeFrequency(averageOfSegments);
 	}
 
 	private float[] getAlphaValues() {
@@ -71,12 +68,12 @@ public class FrequencyPattern {
 		LocalTime moment = LocalTime.from(begin);
 		LocalTime lastMoment = LocalTime.from(end);
 		while (moment.isBefore(lastMoment)) {
-			List<TimeAreaPair> timelineAForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
+			List<TimeAreaPair> timelineAForMoment = getTimeAreaPairListFromTimeLine(
 					timelineA, moment);
-			List<TimeAreaPair> timelineBForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
+			List<TimeAreaPair> timelineBForMoment = getTimeAreaPairListFromTimeLine(
 					timelineB, moment);
-			output[counter++] = shareBeamzone(timelineAForCurrentTimeslot,
-					timelineBForCurrentTimeslot);
+			output[counter++] = shareBeamzone(timelineAForMoment,
+					timelineBForMoment);
 
 			moment = moment.plusMinutes(60 / timeslotsPerSegment);
 		}
@@ -112,8 +109,7 @@ public class FrequencyPattern {
 		return result;
 	}
 
-	private float[] calculateAverageOfSegments(boolean[] commonOccurrences,
-			int[] segmentSizes) {
+	private float[] calculateAverageOfSegments(boolean[] commonOccurrences) {
 		float[] output = new float[numberOfSegments];
 
 		int timelineIndex = 0;
@@ -132,8 +128,7 @@ public class FrequencyPattern {
 		return output;
 	}
 
-	private float calculateRelativeFrequency(float[] averageOfSegments,
-			float[] alphaValues) {
+	private float calculateRelativeFrequency(float[] averageOfSegments) {
 		float output = 0.0f;
 
 		for (int i = 0; i < numberOfSegments; i++) {
