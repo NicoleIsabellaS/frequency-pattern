@@ -15,6 +15,8 @@ public class FrequencyPattern {
 	private int numberOfSegments;
 	private int timeslotsPerSegment = 6;
 	private int timelineSize;
+	int[] segmentSizes;
+	float[] alphaValues;
 	private DateTimeFormatter dateTimeFormat = DateTimeFormatter
 			.ofPattern("yyyy-MM-dd HH:mm:ssX");
 
@@ -23,21 +25,9 @@ public class FrequencyPattern {
 		this.end = end;
 		this.numberOfSegments = (int) begin.until(end, ChronoUnit.HOURS);
 		timelineSize = timeslotsPerSegment * numberOfSegments;
-	}
 
-	public float frequencyGenerator(Node a, Node b) {
-		int[] segmentSizes = getSegmentSizes();
-
-		float[] alphaValues = getAlphaValues();
-
-		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
-		float[] averageOfSegments = calculateAverageOfSegments(
-				commonOccurrences, segmentSizes);
-
-		float relativeFrequency = calculateRelativeFrequency(averageOfSegments,
-				alphaValues);
-
-		return relativeFrequency;
+		segmentSizes = getSegmentSizes();
+		alphaValues = getAlphaValues();
 	}
 
 	private float[] getAlphaValues() {
@@ -57,6 +47,11 @@ public class FrequencyPattern {
 		return segmentSizes;
 	}
 
+	public float frequencyGenerator(Node a, Node b) {
+		boolean[] commonOccurrences = calculateCommonOccurrences(a, b);
+		return calculateRelativeFrequency(commonOccurrences);
+	}
+
 	private boolean[] calculateCommonOccurrences(Node a, Node b) {
 		boolean[] output = new boolean[timelineSize];
 
@@ -71,12 +66,12 @@ public class FrequencyPattern {
 		LocalTime moment = LocalTime.from(begin);
 		LocalTime lastMoment = LocalTime.from(end);
 		while (moment.isBefore(lastMoment)) {
-			List<TimeAreaPair> timelineAForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
+			List<TimeAreaPair> timelineAForMoment = getTimeAreaPairListFromTimeLine(
 					timelineA, moment);
-			List<TimeAreaPair> timelineBForCurrentTimeslot = getTimeAreaPairListFromTimeLine(
+			List<TimeAreaPair> timelineBForMoment = getTimeAreaPairListFromTimeLine(
 					timelineB, moment);
-			output[counter++] = shareBeamzone(timelineAForCurrentTimeslot,
-					timelineBForCurrentTimeslot);
+			output[counter++] = shareBeamzone(timelineAForMoment,
+					timelineBForMoment);
 
 			moment = moment.plusMinutes(60 / timeslotsPerSegment);
 		}
@@ -112,9 +107,8 @@ public class FrequencyPattern {
 		return result;
 	}
 
-	private float[] calculateAverageOfSegments(boolean[] commonOccurrences,
-			int[] segmentSizes) {
-		float[] output = new float[numberOfSegments];
+	private float calculateRelativeFrequency(boolean[] commonOccurrences) {
+		float output = 0.0f;
 
 		int timelineIndex = 0;
 		for (int i = 0; i < segmentSizes.length; i++) {
@@ -124,20 +118,9 @@ public class FrequencyPattern {
 					ammountOfCommonOccurrences++;
 				}
 			}
-			output[i] = (float) ammountOfCommonOccurrences
-					/ (float) segmentSizes[i];
+			output += (float) ammountOfCommonOccurrences
+					/ (float) segmentSizes[i] * alphaValues[i];
 			timelineIndex += segmentSizes[i];
-		}
-
-		return output;
-	}
-
-	private float calculateRelativeFrequency(float[] averageOfSegments,
-			float[] alphaValues) {
-		float output = 0.0f;
-
-		for (int i = 0; i < numberOfSegments; i++) {
-			output += averageOfSegments[i] * alphaValues[i];
 		}
 
 		return output;

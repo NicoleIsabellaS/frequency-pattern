@@ -18,9 +18,9 @@ public class Application {
 		try {
 			DBConnection connection = new DBConnection();
 			connection.connect();
-			createNodesFile(connection, "nodes.ser");
+			createNodesFile(connection, "nodes_quick.ser");
 			connection.disconnect();
-			ArrayList<Node> nodes = readNodesFromFile("nodes.ser");
+			ArrayList<Node> nodes = readNodesFromFile("nodes_quick.ser");
 			writeCSVFromNodes(nodes);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -30,24 +30,24 @@ public class Application {
 	private static void createNodesFile(DBConnection connection, String filename)
 			throws IOException {
 		System.out.println("Getting a lot of information from database. "
-				+ "This will take a while.\n"
-				+ "Just kidding. This is only the beginning.");
-		List<String> hashmacs = connection.getAllHashMacs();
+				+ "This will take a while.");
+		List<String> hashmacs = connection.getAllHashMacs(eventBeginOfDay,
+				eventEndOfDay);
 		System.out.println("finished");
 
-		ArrayList<String> shortmacs = new ArrayList<String>();
-		for (int i = 0; i < 100; i++) {
-			shortmacs.add(hashmacs.get(i));
-		}
+		// ArrayList<String> shortmacs = new ArrayList<String>();
+		// for (int i = 0; i < 100; i++) {
+		// shortmacs.add(hashmacs.get(i));
+		// }
 
-		// numberOfElements = hashmacs.size();
-		numberOfElements = shortmacs.size();
+		numberOfElements = hashmacs.size();
+		// numberOfElements = shortmacs.size();
 
 		System.out.println("Creating nodes file from " + numberOfElements
 				+ " hashmacs: ");
 		JsonFileWriter file = new JsonFileWriter(filename);
-		// for (String each : hashmacs) {
-		for (String each : shortmacs) {
+		for (String each : hashmacs) {
+			// for (String each : shortmacs) {
 			Node node = new Node(each);
 			node.setTimeline(connection.getTimeline(each, eventBeginOfDay,
 					eventEndOfDay));
@@ -81,33 +81,34 @@ public class Application {
 				+ " values:");
 		FrequencyPattern frequencyPattern = new FrequencyPattern(
 				eventBeginOfDay, eventEndOfDay);
-		CsvGenerator csv = new CsvGenerator("test.csv");
-		csv.addCell("mac hashes");
+
+		String[] values = new String[numberOfElements + 1];
+		values[0] = "";
 
 		// header row
-		for (Node each : nodes) {
-			csv.addCell(each.getHashmac());
+		for (int cellIndex = 1; cellIndex <= numberOfElements; cellIndex++) {
+			values[cellIndex] = nodes.get(cellIndex).getHashmac();
 		}
-		csv.newRow();
+		new WriteLineRunnable("test_quick.csv", values).start();
 
 		// data rows
-		for (int rowIndex = 0; rowIndex < nodes.size(); rowIndex++) {
+		for (int rowIndex = 0; rowIndex < numberOfElements; rowIndex++) {
 			System.out.print(".");
 			if (rowIndex % 75 == 74)
 				System.out.print("\n");
+			values = new String[numberOfElements + 1];
 			// header column
-			csv.addCell(nodes.get(rowIndex).getHashmac());
+			values[0] = nodes.get(rowIndex).getHashmac();
 
 			// data columns
-			for (int cellIndex = 0; cellIndex < nodes.size(); cellIndex++) {
+			for (int cellIndex = 1; cellIndex <= numberOfElements; cellIndex++) {
 				float value = rowIndex == cellIndex ? 0f : frequencyPattern
 						.frequencyGenerator(nodes.get(rowIndex),
 								nodes.get(cellIndex));
-				csv.addCell(String.valueOf(value));
+				values[cellIndex] = String.valueOf(value);
 			}
-			csv.newRow();
+			new WriteLineRunnable("test_quick.csv", values).start();
 		}
-		csv.close();
 		System.out.println("finished");
 	}
 }
