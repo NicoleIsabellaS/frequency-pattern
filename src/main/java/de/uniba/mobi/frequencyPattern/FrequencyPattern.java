@@ -56,12 +56,16 @@ public class FrequencyPattern {
 		Map<String, String> timelineA = a.getTimeline();
 		Map<String, String> timelineB = b.getTimeline();
 
+		if (timelineA.size() == 0 || timelineB.size() == 0) {
+			return 0;
+		}
+
 		LocalTime moment = LocalTime.from(begin);
 		LocalTime lastMoment = LocalTime.from(end);
 		while (moment.isBefore(lastMoment)) {
-			Map<String, String> timelineAForMoment = getTimeAreaPairListFromTimeLine(
+			Map<String, String> timelineAForMoment = getTimeLineFromMoment(
 					timelineA, moment);
-			Map<String, String> timelineBForMoment = getTimeAreaPairListFromTimeLine(
+			Map<String, String> timelineBForMoment = getTimeLineFromMoment(
 					timelineB, moment);
 			if (shareBeamzone(timelineAForMoment, timelineBForMoment)) {
 				numberOfCommonOccurrences++;
@@ -74,18 +78,19 @@ public class FrequencyPattern {
 
 	private boolean shareBeamzone(Map<String, String> timelineA,
 			Map<String, String> timelineB) {
-		for (String key : timelineA.keySet()) {
-			if (timelineB.containsKey(key)) {
-				return timelineA.get(key).equals(timelineB.get(key));
+		for (String area : timelineA.values()) {
+			if (timelineB.containsValue(area)) {
+				return true;
 			}
 		}
 		return false;
 	}
 
-	private Map<String, String> getTimeAreaPairListFromTimeLine(
+	private Map<String, String> getTimeLineFromMoment(
 			Map<String, String> timeline, LocalTime moment) {
 		Map<String, String> result = new HashMap<>();
-		LocalTime momentPlusTenMinutes = LocalTime.from(moment).plusMinutes(10);
+		LocalTime momentPlusTenMinutes = LocalTime.from(moment).plusMinutes(
+				60 / timeslotsPerSegment);
 		for (String timestamp : timeline.keySet()) {
 			LocalTime entryTime = LocalTime.from(LocalDateTime.parse(timestamp,
 					dateTimeFormat));
