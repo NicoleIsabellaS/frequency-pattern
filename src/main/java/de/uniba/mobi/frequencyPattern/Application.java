@@ -18,9 +18,9 @@ public class Application {
 		try {
 			DBConnection connection = new DBConnection();
 			connection.connect();
-			createNodesFile(connection, "nodes_quicker.ser");
+			createNodesFile(connection, "nodes_test.ser");
 			connection.disconnect();
-			ArrayList<Node> nodes = readNodesFromFile("nodes_quicker.ser");
+			ArrayList<Node> nodes = readNodesFromFile("nodes_test.ser");
 			writeCSVFromNodes(nodes);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -52,14 +52,13 @@ public class Application {
 			node.setTimeline(connection.getTimeline(each, eventBeginOfDay,
 					eventEndOfDay));
 			file.writeDataToFile(node);
-			System.out.print(".");
-			if (index++ % 100 == 99)
-				System.out.print("\n");
+			System.out.print("progress: [" + index++ + "/" + numberOfElements
+					+ "]" + "\r");
 
 		}
 		index = 0;
 		file.finish();
-		System.out.println("finished");
+		System.out.println("\n" + "finished");
 	}
 
 	private static ArrayList<Node> readNodesFromFile(String filename)
@@ -68,10 +67,12 @@ public class Application {
 		ArrayList<Node> result = new ArrayList<>();
 		JsonFileReader file = new JsonFileReader(filename);
 		for (int i = 0; i < numberOfElements; i++) {
+			System.out.print("progress: [" + i + "/" + numberOfElements + "]"
+					+ "\r");
 			result.add(file.readDataPointFromFile());
 		}
 		file.finish();
-		System.out.println("finished");
+		System.out.println("\n" + "finished");
 		return result;
 	}
 
@@ -81,7 +82,7 @@ public class Application {
 				+ " values:");
 		FrequencyPattern frequencyPattern = new FrequencyPattern(
 				eventBeginOfDay, eventEndOfDay);
-		CsvGenerator csv = new CsvGenerator("test_quicker.csv");
+		CsvGenerator csv = new CsvGenerator("test_test.csv");
 
 		String[] values = new String[numberOfElements + 1];
 
@@ -94,9 +95,8 @@ public class Application {
 
 		// data rows
 		for (int rowIndex = 0; rowIndex < numberOfElements; rowIndex++) {
-			System.out.print(".");
-			if (rowIndex % 100 == 99)
-				System.out.print("\n");
+			System.out.print("progress: [" + rowIndex + "/" + numberOfElements
+					+ "]" + "\r");
 			values = new String[numberOfElements + 1];
 			// header column
 			values[0] = nodes.get(rowIndex).getHashmac();
@@ -110,6 +110,6 @@ public class Application {
 			}
 			csv.newRow(values);
 		}
-		System.out.println("finished");
+		System.out.println("\n" + "finished");
 	}
 }
