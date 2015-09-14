@@ -18,9 +18,9 @@ public class Application {
 		try {
 			DBConnection connection = new DBConnection();
 			connection.connect();
-			createNodesFile(connection, "nodes_quicker.ser");
+			createNodesFile(connection, "nodes_quickest.ser");
 			connection.disconnect();
-			ArrayList<Node> nodes = readNodesFromFile("nodes_quicker.ser");
+			ArrayList<Node> nodes = readNodesFromFile("nodes_quickest.ser");
 			writeCSVFromNodes(nodes);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -55,6 +55,9 @@ public class Application {
 			System.out.print(".");
 			if (index++ % 100 == 99)
 				System.out.print("\n");
+			if (index % 1000 == 999) {
+				System.out.print("\n");
+			}
 
 		}
 		index = 0;
@@ -81,7 +84,7 @@ public class Application {
 				+ " values:");
 		FrequencyPattern frequencyPattern = new FrequencyPattern(
 				eventBeginOfDay, eventEndOfDay);
-		CsvGenerator csv = new CsvGenerator("test_quicker.csv");
+		CsvGenerator csv = new CsvGenerator("test_quickest.csv");
 
 		String[] values = new String[numberOfElements + 1];
 
@@ -97,6 +100,9 @@ public class Application {
 			System.out.print(".");
 			if (rowIndex % 100 == 99)
 				System.out.print("\n");
+			if (rowIndex % 1000 == 999) {
+				System.out.print("\n");
+			}
 			values = new String[numberOfElements + 1];
 			// header column
 			values[0] = nodes.get(rowIndex).getHashmac();
